@@ -1,5 +1,12 @@
 from entities import Player, Weapon, Inventory, Item
 
+# Dictionary of items
+item_dict = {
+    "Minor health potion": Item("Minor Health Potion", "heal", None, 1),
+    "Major health potion": Item("Major Health Potion", "heal", None, 2),
+    "Vial of squonk tears": Item("Vial of squonk tears", "ressistance", "fire", 2)
+}
+
 # Dictionary of weapons
 weapon_dict = {
     "Sword of Destiny": Weapon("Sword of Destiny", 20, "slash"),
@@ -14,7 +21,7 @@ weapon_dict = {
 
 # Dictionary of playable heroes
 hero_dict = {
-    "Warrior": Player("Warrior", 100, 75, Inventory([weapon_dict["Sword of Destiny"]], []), [], [])
+    "Warrior": Player("Warrior", 100, 75, Inventory([weapon_dict["Sword of Destiny"]], [item_dict["Minor health potion"]]), [], [])
 }
 
 # Make a mimic enemy (of course)
@@ -28,11 +35,4 @@ enemy_dict = {
     "Flying piglett": Player("Flying piglett", 1, 100, Inventory([weapon_dict["Cute snuffle"]], []), [], []),
     "Four-dimensional octopus": Player("Four-dimensional octopus", 10, 100, Inventory([weapon_dict["Interdimensional tentacle"]], []), [], []),
     "Squonk": Player("Squonk", 25, 30, Inventory([weapon_dict["Cry of shame"]], []), [], [])
-}
-
-# Dictionary of items
-item_dict = {
-    "Minor health potion": Item("Minor Health Potion", "healing", None, 1),
-    "Major health potion": Item("Major Health Potion", "healing", None, 2),
-    "Vial of squonk tears": Item("Vial of squonk tears", "ressistance", "fire", 2)
 }

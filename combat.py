@@ -40,10 +40,17 @@ class Battle:
         return damage, is_crit
     
     def use_item(self, player, item):
-        return None
+        if item.effect == "heal":
+            old_hp = player.current_hp
+            player.current_hp = min(player.max_hp, player.current_hp + (50 * item.strength))
+            time.sleep(1)
+            print(f"{player.name} used {item.name}.")
+            time.sleep(1)
+            print(f"{player.name} gained {player.current_hp - old_hp} health!")
     
-    # Make the half turn stuff happen here (different things depending on the action)
-    def half_turn(self, attacker, defender, action):
+        player.inventory.items.remove(item)
+    
+    def half_turn(self, attacker, defender, action, item_input):
         if action == "run":
             time.sleep(1)
             print("You run away!")
@@ -65,17 +72,9 @@ class Battle:
                 return "defender_dead"
 
         elif action == "item":
-            time.sleep(1)
-            for i, item in enumerate(attacker.inventory.items):
-                time.sleep(1)
-                print(f"{i + 1}: {item.name}")
-            time.sleep(1)
-            item_input = int(input("Use which item: "))
             self.use_item(attacker, attacker.inventory.items[item_input - 1])
+        return "continue"
 
-        return None
-
-    # This code is fucked, it needs to always assign the faster/slower players first. Then do the actions run/attack/item.
     def turn(self):
         hero = self.hero
         enemy =  self.enemy
@@ -83,8 +82,21 @@ class Battle:
         print("-----------")
         print(f"New Turn: Current health {hero.current_hp}/{hero.max_hp}")
         print("-----------")
-        time.sleep(1)
-        user_input = input("Choose your action (attack/run/item): ")
+        item_input = None
+        while True:
+            time.sleep(1)
+            user_input = input("Choose your action (attack/run/item): ")
+            if user_input == "item":
+                if hero.inventory.items == []:
+                    time.sleep(1)
+                    print("You have no items!")
+                    continue
+                for i, item in enumerate(hero.inventory.items):
+                    time.sleep(1)
+                    print(f"{i + 1}: {item.name}")
+                time.sleep(1)
+                item_input = int(input("Use which item: "))
+            break
 
         # Choose who goes first based on speed
         if hero.speed > enemy.speed:
@@ -101,63 +113,32 @@ class Battle:
                 first_player = enemy
                 second_player = hero
 
-        # Update this to make you take a hit if you go second (even if you run)
-        if user_input == "run":
-            # Make user run, not first player
-            self.half_turn(first_player, second_player, "run")
-
-        elif user_input == "attack":
-                # First player attacks
-                damage, is_crit = self.calculate_damage(first_player, second_player)
-                time.sleep(1)
-                print(f"{first_player.name} attacks with {first_player.equipped_weapon.name}!")
-                if is_crit:
-                    time.sleep(1)
-                    print("It's a critical hit!")
-                time.sleep(1)
-                print(f"{second_player.name} takes {damage} damage!")
-                self.take_damage(second_player, damage)
-
-                if not second_player.is_alive():
-                    time.sleep(1)
-                    print(f"{second_player.name} was slain!")
-                    if second_player == enemy:
-                        return "enemy_dead"
-                    else:
-                        return "hero_dead"
-                
-                # Now the second player attacks
-                damage, is_crit = self.calculate_damage(second_player, first_player)
-                time.sleep(1)
-                print(f"{second_player.name} attacks with {second_player.equipped_weapon.name}!")
-                if is_crit:
-                    time.sleep(1)
-                    print("It's a critical hit!")
-                time.sleep(1)
-                print(f"{first_player.name} takes {damage} damage!")
-                self.take_damage(first_player, damage)
-
-                if not first_player.is_alive():
-                    time.sleep(1)
-                    print(f"{first_player.name} was slain!")
-                    if first_player == enemy:
-                        return "enemy_dead"
-                    else:
-                        return "hero_dead"
-        elif user_input == "item":
-            time.sleep(1)
-            for i, item in enumerate(hero.inventory.items):
-                time.sleep(1)
-                print(f"{i + 1}: {item.name}")
-            time.sleep(1)
-            item_input = int(input("Use which item: "))
-            self.use_item(hero, hero.inventory.items[item_input - 1])
-    
+        if first_player == hero:
+            first_player_action = user_input
+            second_player_action = "attack"
         else:
-            print("Invalid action")
-            return "continue"
+            first_player_action = "attack"
+            second_player_action = user_input
 
-        print("")
+        result = self.half_turn(first_player, second_player, first_player_action, item_input)
+        if result in ["run", "defender_dead"]:
+            if result == "run":
+                return "run"
+            else:
+                if second_player == hero:
+                    return "hero_dead"
+                else:
+                    return "enemy_dead"
+
+        result = self.half_turn(second_player, first_player, second_player_action, item_input)
+        if result in ["run", "defender_dead"]:
+            if result == "run":
+                return "run"
+            else:
+                if first_player == hero:
+                    return "hero_dead"
+                else:
+                    return "enemy_dead"
 
         return "continue"
 

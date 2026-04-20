@@ -49,40 +49,49 @@ class Battle:
             print(f"{player.name} gained {player.current_hp - old_hp} health!")
     
         player.inventory.items.remove(item)
+
+    # Need some more methods to simplify half_turn
+
+    # perform_attack
+
+    def perform_attack(self, attacker, defender):
+        damage, is_crit = self.calculate_damage(attacker, defender)
+        time.sleep(1)
+        print(f"{attacker.name} attacks with {attacker.equipped_weapon.name}!")
+        if is_crit:
+            time.sleep(1)
+            print("It's a critical hit!")
+        time.sleep(1)
+        print(f"{defender.name} takes {damage} damage!")
+        self.take_damage(defender, damage)
     
-    def half_turn(self, attacker, defender, action, item_input):
+    def half_turn(self, attacker, defender, action, item=None):
         if action == "run":
             time.sleep(1)
             print("You run away!")
             return "run"
         elif action == "attack":
-            damage, is_crit = self.calculate_damage(attacker, defender)
-            time.sleep(1)
-            print(f"{attacker.name} attacks with {attacker.equipped_weapon.name}!")
-            if is_crit:
-                time.sleep(1)
-                print("It's a critical hit!")
-            time.sleep(1)
-            print(f"{defender.name} takes {damage} damage!")
-            self.take_damage(defender, damage)
-
+            self.perform_attack(attacker, defender)
             if not defender.is_alive():
                 time.sleep(1)
                 print(f"{defender.name} was slain!")
                 return "defender_dead"
 
         elif action == "item":
-            self.use_item(attacker, attacker.inventory.items[item_input - 1])
+            if attacker == self.enemy:
+                item = random.choice(attacker.inventory.items)
+            self.use_item(attacker, item)
         return "continue"
-
-    def turn(self):
+    
+    def choose_enemy_action(self, enemy):
+        if random.random() < 0.2 and enemy.inventory.items:
+            return "item"
+        return "attack"
+    
+    def get_player_action(self):
         hero = self.hero
-        enemy =  self.enemy
-        time.sleep(1)
-        print("-----------")
-        print(f"New Turn: Current health {hero.current_hp}/{hero.max_hp}")
-        print("-----------")
         item_input = None
+        selected_item = None
         while True:
             time.sleep(1)
             user_input = input("Choose your action (attack/run/item): ")
@@ -95,10 +104,22 @@ class Battle:
                     time.sleep(1)
                     print(f"{i + 1}: {item.name}")
                 time.sleep(1)
-                item_input = int(input("Use which item: "))
+                while True:
+                    try:
+                        item_input = int(input("Use which item: "))
+                        if 1 <= item_input <= len(hero.inventory.items):
+                            selected_item = hero.inventory.items[item_input - 1]
+                            break
+                        else:
+                            print("Invalid choice.")
+                    except ValueError:
+                        print("Enter a number.")
             break
-
-        # Choose who goes first based on speed
+        return user_input, selected_item
+    
+    def get_turn_order(self):
+        hero = self.hero
+        enemy = self.enemy
         if hero.speed > enemy.speed:
             first_player = hero
             second_player = enemy
@@ -112,15 +133,31 @@ class Battle:
             else:
                 first_player = enemy
                 second_player = hero
+        return first_player, second_player
+
+    def turn(self):
+        hero = self.hero
+        enemy =  self.enemy
+        time.sleep(1)
+        print("-----------")
+        print(f"New Turn: Current health {hero.current_hp}/{hero.max_hp}")
+        print("-----------")
+        
+        user_input, selected_item = self.get_player_action()
+
+        first_player, second_player = self.get_turn_order()
 
         if first_player == hero:
             first_player_action = user_input
-            second_player_action = "attack"
+            second_player_action = self.choose_enemy_action(enemy)
         else:
-            first_player_action = "attack"
+            first_player_action = self.choose_enemy_action(enemy)
             second_player_action = user_input
 
-        result = self.half_turn(first_player, second_player, first_player_action, item_input)
+        if first_player == hero:
+            result = self.half_turn(first_player, second_player, first_player_action, selected_item)
+        else:
+            result = self.half_turn(first_player, second_player, first_player_action)
         if result in ["run", "defender_dead"]:
             if result == "run":
                 return "run"
@@ -130,7 +167,10 @@ class Battle:
                 else:
                     return "enemy_dead"
 
-        result = self.half_turn(second_player, first_player, second_player_action, item_input)
+        if second_player == hero:
+            result = self.half_turn(second_player, first_player, second_player_action, selected_item)
+        else:
+            result = self.half_turn(second_player, first_player, second_player_action)
         if result in ["run", "defender_dead"]:
             if result == "run":
                 return "run"

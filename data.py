@@ -4,7 +4,7 @@ from entities import Player, Weapon, Inventory, Item
 item_dict = {
     "Minor health potion": Item("Minor Health Potion", "heal", None, 1),
     "Major health potion": Item("Major Health Potion", "heal", None, 2),
-    "Vial of squonk tears": Item("Vial of squonk tears", "ressistance", "fire", 2)
+    "Vial of squonk tears": Item("Vial of squonk tears", "resistance", "fire", 2)
 }
 
 # Dictionary of weapons

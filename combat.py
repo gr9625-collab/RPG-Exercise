@@ -27,6 +27,11 @@ class Battle:
         else:
             type_modifier = 1
 
+        # Temporary resistance modifiers
+        temp_modifier = 1
+        if attacker.eqipped_weapon.damage_type in defender.temporary_resistances.keys():
+            temp_modifier = 1 -  defender.temporary_resistances[attacker.equipped_weapon.damage_type]["strength"]* 0.33
+
         # Crit checker (10% chance of crit)
         if random.random() > 0.9:
             crit_modifier = 1.5
@@ -35,7 +40,7 @@ class Battle:
             crit_modifier = 1
             is_crit = False
 
-        damage = math.ceil(raw_damage * type_modifier * crit_modifier)
+        damage = math.ceil(raw_damage * type_modifier * temp_modifier * crit_modifier)
 
         return damage, is_crit
     
@@ -47,12 +52,30 @@ class Battle:
             print(f"{player.name} used {item.name}.")
             time.sleep(1)
             print(f"{player.name} gained {player.current_hp - old_hp} health!")
+
+        if item.effect == "resistance":
+            time.sleep(1)
+            print(f"{player.name} used {item.name}.")
+            time.sleep(1)
+            print(f"{player.name} gained resistance to {item.effect_type}!")
+            player.temporary_resistances[item.effect_type] = {
+                "strength": item.strength,
+                "duration": item.duration
+            }
     
         player.inventory.items.remove(item)
 
-    # Need some more methods to simplify half_turn
+    # Updates the statuses as the end of each turn
 
-    # perform_attack
+    def update_status(self, player):
+        # Updates temporary resistances
+        for damage_type in player.temporary_resistances.keys():
+            player.temporary_resistances[damage_type]["duration"] -= 1
+            if player.temporary_resistances[damage_type]["duration"] == 0:
+                player.temporary_resistances.pop[damage_type]
+                time.sleep(1)
+                print(f"{player.name}'s resistance to {damage_type} wore off!")
+        return None
 
     def perform_attack(self, attacker, defender):
         damage, is_crit = self.calculate_damage(attacker, defender)
@@ -179,6 +202,9 @@ class Battle:
                     return "hero_dead"
                 else:
                     return "enemy_dead"
+                
+        self.update_status(first_player)
+        self.update_status(second_player)
 
         return "continue"
 

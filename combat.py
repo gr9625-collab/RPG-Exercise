@@ -6,6 +6,7 @@ import copy
 from entities import Player
 from data import enemy_dict
 
+
 class Battle:
     def __init__(self, hero, enemy):
         self.hero = hero
@@ -29,8 +30,17 @@ class Battle:
 
         # Temporary resistance modifiers
         temp_modifier = 1
-        if attacker.eqipped_weapon.damage_type in defender.temporary_resistances.keys():
-            temp_modifier = 1 -  defender.temporary_resistances[attacker.equipped_weapon.damage_type]["strength"]* 0.33
+        if (
+            attacker.equipped_weapon.damage_type
+            in defender.temporary_resistances.keys()
+        ):
+            temp_modifier = (
+                1
+                - defender.temporary_resistances[attacker.equipped_weapon.damage_type][
+                    "strength"
+                ]
+                * 0.33
+            )
 
         # Crit checker (10% chance of crit)
         if random.random() > 0.9:
@@ -43,11 +53,28 @@ class Battle:
         damage = math.ceil(raw_damage * type_modifier * temp_modifier * crit_modifier)
 
         return damage, is_crit
-    
+
+    # This should apply status effects for both weapons and item
+    def apply_status_effect(
+        self,
+        player,
+        status_effect,
+        duration,
+        strength=None,
+    ):
+        player.status_effects[status_effect.name] = {
+            "strength": strength,
+            "duration": duration,
+        }
+
+        return None
+
     def use_item(self, player, item):
         if item.effect == "heal":
             old_hp = player.current_hp
-            player.current_hp = min(player.max_hp, player.current_hp + (50 * item.strength))
+            player.current_hp = min(
+                player.max_hp, player.current_hp + (50 * item.strength)
+            )
             time.sleep(1)
             print(f"{player.name} used {item.name}.")
             time.sleep(1)
@@ -60,19 +87,19 @@ class Battle:
             print(f"{player.name} gained resistance to {item.effect_type}!")
             player.temporary_resistances[item.effect_type] = {
                 "strength": item.strength,
-                "duration": item.duration
+                "duration": item.duration,
             }
-    
+
         player.inventory.items.remove(item)
 
     # Updates the statuses as the end of each turn
 
     def update_status(self, player):
         # Updates temporary resistances
-        for damage_type in player.temporary_resistances.keys():
+        for damage_type in list(player.temporary_resistances.keys()):
             player.temporary_resistances[damage_type]["duration"] -= 1
             if player.temporary_resistances[damage_type]["duration"] == 0:
-                player.temporary_resistances.pop[damage_type]
+                player.temporary_resistances.pop(damage_type)
                 time.sleep(1)
                 print(f"{player.name}'s resistance to {damage_type} wore off!")
         return None
@@ -87,7 +114,7 @@ class Battle:
         time.sleep(1)
         print(f"{defender.name} takes {damage} damage!")
         self.take_damage(defender, damage)
-    
+
     def half_turn(self, attacker, defender, action, item=None):
         if action == "run":
             time.sleep(1)
@@ -105,12 +132,12 @@ class Battle:
                 item = random.choice(attacker.inventory.items)
             self.use_item(attacker, item)
         return "continue"
-    
+
     def choose_enemy_action(self, enemy):
         if random.random() < 0.2 and enemy.inventory.items:
             return "item"
         return "attack"
-    
+
     def get_player_action(self):
         hero = self.hero
         item_input = None
@@ -139,7 +166,7 @@ class Battle:
                         print("Enter a number.")
             break
         return user_input, selected_item
-    
+
     def get_turn_order(self):
         hero = self.hero
         enemy = self.enemy
@@ -160,12 +187,12 @@ class Battle:
 
     def turn(self):
         hero = self.hero
-        enemy =  self.enemy
+        enemy = self.enemy
         time.sleep(1)
         print("-----------")
         print(f"New Turn: Current health {hero.current_hp}/{hero.max_hp}")
         print("-----------")
-        
+
         user_input, selected_item = self.get_player_action()
 
         first_player, second_player = self.get_turn_order()
@@ -178,7 +205,9 @@ class Battle:
             second_player_action = user_input
 
         if first_player == hero:
-            result = self.half_turn(first_player, second_player, first_player_action, selected_item)
+            result = self.half_turn(
+                first_player, second_player, first_player_action, selected_item
+            )
         else:
             result = self.half_turn(first_player, second_player, first_player_action)
         if result in ["run", "defender_dead"]:
@@ -188,10 +217,13 @@ class Battle:
                 if second_player == hero:
                     return "hero_dead"
                 else:
+                    self.update_status(hero)
                     return "enemy_dead"
 
         if second_player == hero:
-            result = self.half_turn(second_player, first_player, second_player_action, selected_item)
+            result = self.half_turn(
+                second_player, first_player, second_player_action, selected_item
+            )
         else:
             result = self.half_turn(second_player, first_player, second_player_action)
         if result in ["run", "defender_dead"]:
@@ -201,8 +233,9 @@ class Battle:
                 if first_player == hero:
                     return "hero_dead"
                 else:
+                    self.update_status(hero)
                     return "enemy_dead"
-                
+
         self.update_status(first_player)
         self.update_status(second_player)
 
@@ -213,13 +246,14 @@ class Battle:
         print("")
         print(f"**{enemy.name} appears!**")
         print("")
-        
+
         while True:
             result = self.turn()
 
             if result in ["run", "enemy_dead", "hero_dead"]:
                 return result
-            
+
+
 class Dungeon:
     def __init__(self, hero, enemies):
         self.hero = hero

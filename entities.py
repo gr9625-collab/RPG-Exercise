@@ -26,12 +26,17 @@ class StatusEffect:
 class Poison(StatusEffect):
     def __init__(self, duration):
         super().__init__("Poison", duration)
+        # Poison should not be stackable (something like bleed will be)
+        self.is_stackable = False
 
     def on_turn_end(self, target):
+        old_hp = target.current_hp
         target.current_hp -= 5
+        if target.current_hp < 0:
+            target.current_hp = 0
         self.duration -= 1
         time.sleep(1)
-        print(f"{target.name} takes 5 damage from poison!")
+        print(f"{target.name} takes {old_hp - target.current_hp} damage from poison!")
 
 
 # Try to make a poision dagger weapon that gives the poison status effect

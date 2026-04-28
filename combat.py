@@ -43,7 +43,7 @@ class Battle:
             )
 
         # Crit checker (10% chance of crit)
-        if random.random() > 0.9:
+        if random.random() < 0.1:
             crit_modifier = 1.5
             is_crit = True
         else:
@@ -54,6 +54,7 @@ class Battle:
 
         return damage, is_crit
 
+    # This needs updating for or class based system
     # This should apply status effects for both weapons and item
     def apply_status_effect(
         self,
@@ -111,16 +112,34 @@ class Battle:
         print(f"{defender.name} takes {damage} damage!")
         self.take_damage(defender, damage)
         # Check to see if status effect is inflicted
-        # This later needs to be updated so statuses like poison don't stack
         for status in attacker.equipped_weapon.status_effects:
             if random.random() < status["chance"]:
-                defender.status_effects.append(
-                    status["status_class"](status["duration"])
-                )
-                time.sleep(1)
-                print(
-                    f"{defender.name} has been afflicted with {status["status_class"](status["duration"]).name}!"
-                )
+                # Check to see if status effect is already there to update
+                present = False
+                idx = None
+                for i, current_status in enumerate(defender.status_effects):
+                    if current_status.name == status.name:
+                        present = True
+                        idx = i
+                # If it is not there, simply append it
+                if not present:
+                    defender.status_effects.append(
+                        status["status_class"](status["duration"])
+                    )
+                    time.sleep(1)
+                    print(
+                        f"{defender.name} has been afflicted with {status["status_class"](status["duration"]).name}!"
+                    )
+                # Otherwise update it, depending on whether or not it is stackable
+                else:
+                    if status["status_class"](status["duration"]).stackable:
+                        # Increase the stack
+                        if status["status_class"](status["duration"]).stack < status["status_class"](status["duration"]).max_stack:
+                            status["status_class"](status["duration"]).stack += 1
+                            # Print the message
+
+                    else:
+                        # Just update the duration if necessary
 
     def half_turn(self, attacker, defender, action, item=None):
         if action == "run":
@@ -224,7 +243,10 @@ class Battle:
                 if second_player == hero:
                     return "hero_dead"
                 else:
+                    # Check for death from status here
                     self.update_statuses(hero)
+                    if not hero.is_alive:
+                        return "hero_dead"
                     return "enemy_dead"
 
         if second_player == hero:
@@ -240,11 +262,25 @@ class Battle:
                 if first_player == hero:
                     return "hero_dead"
                 else:
+                    # Check for death from status here
                     self.update_statuses(hero)
+                    if not hero.is_alive:
+                        return "hero_dead"
                     return "enemy_dead"
 
+        # Update statuses and check for death
         self.update_statuses(first_player)
+        if not first_player.is_alive:
+            if first_player == hero:
+                return "hero_dead"
+            else:
+                return "enemy_dead"
         self.update_statuses(second_player)
+        if not second_player.is_alive:
+            if second_player == hero:
+                return "hero_dead"
+            else:
+                return "enemy_dead"
 
         return "continue"
 

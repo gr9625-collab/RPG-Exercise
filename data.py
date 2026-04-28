@@ -1,4 +1,4 @@
-from entities import Player, Weapon, Inventory, Item
+from entities import Player, Weapon, Inventory, Item, StatusEffect, Poison
 
 # Dictionary of items
 item_dict = {
@@ -34,45 +34,65 @@ item_dict = {
 
 # Dictionary of weapons
 weapon_dict = {
+    "Poison dagger": Weapon(
+        "Poison dagger",
+        5,
+        "piece",
+        [
+            {
+                "status_class": Poison,
+                "duration": 5,
+                "chance": 1,
+            },
+        ],
+    ),
     "Sword of Destiny": Weapon(
         "Sword of Destiny",
         20,
         "slash",
+        [],
     ),
     "Wooden club": Weapon(
         "Wooden club",
         5,
         "blunt",
+        [],
     ),
     "Rusty sword": Weapon(
         "Rusty sword",
         15,
         "slash",
+        [],
     ),
     "Fire breath": Weapon(
         "Fire breath",
         50,
         "fire",
+        [],
     ),
     "Small bow": Weapon(
         "Small bow",
         10,
         "pierce",
+        [],
     ),
     "Cute snuffle": Weapon(
         "Cute snuffle",
         0,
         "magic",
+        [],
     ),
     "Interdimensional tentacle": Weapon(
         "Interdimensional tentacle",
         15,
         "magic",
+        [],
     ),
     "Cry of shame": Weapon(
         "Cry of shame",
         0,
         "magic",
+        [],
     ),
 }
 
@@ -83,7 +103,7 @@ hero_dict = {
         100,
         75,
         Inventory(
-            [weapon_dict["Sword of Destiny"]],
+            [weapon_dict["Poison dagger"]],
             [
                 item_dict["Minor health potion"],
                 item_dict["Vial of squonk tears"],

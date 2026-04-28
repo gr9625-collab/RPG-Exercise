@@ -94,15 +94,11 @@ class Battle:
 
     # Updates the statuses as the end of each turn
 
-    def update_status(self, player):
-        # Updates temporary resistances
-        for damage_type in list(player.temporary_resistances.keys()):
-            player.temporary_resistances[damage_type]["duration"] -= 1
-            if player.temporary_resistances[damage_type]["duration"] == 0:
-                player.temporary_resistances.pop(damage_type)
-                time.sleep(1)
-                print(f"{player.name}'s resistance to {damage_type} wore off!")
-        return None
+    def update_statuses(self, player):
+        for i, status in enumerate(player.status_effects):
+            status.on_turn_end(player)
+            if status.duration == 0:
+                player.status_effects.pop(i)
 
     def perform_attack(self, attacker, defender):
         damage, is_crit = self.calculate_damage(attacker, defender)
@@ -114,6 +110,17 @@ class Battle:
         time.sleep(1)
         print(f"{defender.name} takes {damage} damage!")
         self.take_damage(defender, damage)
+        # Check to see if status effect is inflicted
+        # This later needs to be updated so statuses like poison don't stack
+        for status in attacker.equipped_weapon.status_effects:
+            if random.random() < status["chance"]:
+                defender.status_effects.append(
+                    status["status_class"](status["duration"])
+                )
+                time.sleep(1)
+                print(
+                    f"{defender.name} has been afflicted with {status["status_class"](status["duration"]).name}!"
+                )
 
     def half_turn(self, attacker, defender, action, item=None):
         if action == "run":
@@ -217,7 +224,7 @@ class Battle:
                 if second_player == hero:
                     return "hero_dead"
                 else:
-                    self.update_status(hero)
+                    self.update_statuses(hero)
                     return "enemy_dead"
 
         if second_player == hero:
@@ -233,11 +240,11 @@ class Battle:
                 if first_player == hero:
                     return "hero_dead"
                 else:
-                    self.update_status(hero)
+                    self.update_statuses(hero)
                     return "enemy_dead"
 
-        self.update_status(first_player)
-        self.update_status(second_player)
+        self.update_statuses(first_player)
+        self.update_statuses(second_player)
 
         return "continue"
 

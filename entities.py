@@ -1,3 +1,6 @@
+import time
+
+
 class Item:
     def __init__(self, name, effect, effect_type, strength, duration):
         self.name = name
@@ -27,6 +30,8 @@ class Poison(StatusEffect):
     def on_turn_end(self, target):
         target.current_hp -= 5
         self.duration -= 1
+        time.sleep(1)
+        print(f"{target.name} takes 5 damage from poison!")
 
 
 # Try to make a poision dagger weapon that gives the poison status effect
@@ -47,10 +52,12 @@ class Inventory:
 
 
 class Weapon:
-    def __init__(self, name, damage, damage_type):
+    def __init__(self, name, damage, damage_type, status_effects):
         self.name = name
         self.damage = damage
         self.damage_type = damage_type
+        # Status effects should be a list of dictionaries? With the status, duration and the chance of inflicting said status?
+        self.status_effects = status_effects
 
 
 class Player:

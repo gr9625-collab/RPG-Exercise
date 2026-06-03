@@ -37,7 +37,7 @@ weapon_dict = {
     "Poison dagger": Weapon(
         "Poison dagger",
         5,
-        "piece",
+        "pierce",
         [
             {
                 "status_class": Poison,

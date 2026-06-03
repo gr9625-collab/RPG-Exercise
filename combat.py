@@ -101,24 +101,18 @@ class Battle:
             if status.duration == 0:
                 player.status_effects.pop(i)
 
-    def perform_attack(self, attacker, defender):
-        damage, is_crit = self.calculate_damage(attacker, defender)
-        time.sleep(1)
-        print(f"{attacker.name} attacks with {attacker.equipped_weapon.name}!")
-        if is_crit:
-            time.sleep(1)
-            print("It's a critical hit!")
-        time.sleep(1)
-        print(f"{defender.name} takes {damage} damage!")
-        self.take_damage(defender, damage)
-        # Check to see if status effect is inflicted
+    # Inflicts weapon status conditions (if any)
+    def inflict_weapon_status(self, attacker, defender):
         for status in attacker.equipped_weapon.status_effects:
             if random.random() < status["chance"]:
                 # Check to see if status effect is already there to update
                 present = False
                 idx = None
                 for i, current_status in enumerate(defender.status_effects):
-                    if current_status.name == status.name:
+                    if (
+                        current_status.name
+                        == status["status_class"](status["duration"]).name
+                    ):
                         present = True
                         idx = i
                 # If it is not there, simply append it
@@ -132,14 +126,34 @@ class Battle:
                     )
                 # Otherwise update it, depending on whether or not it is stackable
                 else:
-                    if status["status_class"](status["duration"]).stackable:
+                    if status["status_class"](status["duration"]).is_stackable:
                         # Increase the stack
-                        if status["status_class"](status["duration"]).stack < status["status_class"](status["duration"]).max_stack:
-                            status["status_class"](status["duration"]).stack += 1
-                            # Print the message
+                        # FIX THIS!!!
+                        # This needs to be happening for the status in the defenders status list!
+                        if (
+                            defender.status_effects[idx].stack
+                            < defender.status_effects[idx].max_stack
+                        ):
+                            defender.status_effects[idx].stack += 1
+                            print("The stack increases")
 
                     else:
-                        # Just update the duration if necessary
+                        # SET THE DURATION OF THE STATUS IN THE DEFENDER STATUS LIST BACK UP TO MAXIMUM (if necessary)
+                        if defender.status_effects[idx].duration < status["duration"]:
+                            defender.status_effects[idx].duration = status["duration"]
+                            print("The duration resets")
+
+    def perform_attack(self, attacker, defender):
+        damage, is_crit = self.calculate_damage(attacker, defender)
+        time.sleep(1)
+        print(f"{attacker.name} attacks with {attacker.equipped_weapon.name}!")
+        if is_crit:
+            time.sleep(1)
+            print("It's a critical hit!")
+        time.sleep(1)
+        print(f"{defender.name} takes {damage} damage!")
+        self.take_damage(defender, damage)
+        self.inflict_weapon_status(attacker, defender)
 
     def half_turn(self, attacker, defender, action, item=None):
         if action == "run":

@@ -39,10 +39,6 @@ class Poison(StatusEffect):
         print(f"{target.name} takes {old_hp - target.current_hp} damage from poison!")
 
 
-# Try to make a poision dagger weapon that gives the poison status effect
-# Test this out before making more status effects
-
-
 class Resistance(StatusEffect):
     def __init__(self, duration, resistance_type, strength):
         super().__init__("Resistance", duration)

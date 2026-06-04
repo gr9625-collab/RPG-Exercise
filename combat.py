@@ -4,7 +4,7 @@ import math
 import copy
 
 from entities import Player
-from data import enemy_dict
+from data import enemy_dict, item_dict
 
 
 class Battle:
@@ -100,6 +100,8 @@ class Battle:
             status.on_turn_end(player)
             if status.duration == 0:
                 player.status_effects.pop(i)
+                time.sleep(1)
+                print(f"The {status.name} on {player.name} wore off")
 
     # Inflicts weapon status conditions (if any)
     def inflict_weapon_status(self, attacker, defender):
@@ -127,21 +129,20 @@ class Battle:
                 # Otherwise update it, depending on whether or not it is stackable
                 else:
                     if status["status_class"](status["duration"]).is_stackable:
-                        # Increase the stack
-                        # FIX THIS!!!
-                        # This needs to be happening for the status in the defenders status list!
                         if (
                             defender.status_effects[idx].stack
-                            < defender.status_effects[idx].max_stack
+                            < defender.status_effects[idx].max_stacks
                         ):
                             defender.status_effects[idx].stack += 1
-                            print("The stack increases")
+                            # print("The stack increases")
 
                     else:
-                        # SET THE DURATION OF THE STATUS IN THE DEFENDER STATUS LIST BACK UP TO MAXIMUM (if necessary)
                         if defender.status_effects[idx].duration < status["duration"]:
                             defender.status_effects[idx].duration = status["duration"]
                             print("The duration resets")
+                            print(
+                                f"The duration is now {defender.status_effects[idx].duration}"
+                            )
 
     def perform_attack(self, attacker, defender):
         damage, is_crit = self.calculate_damage(attacker, defender)
@@ -163,8 +164,8 @@ class Battle:
         elif action == "attack":
             self.perform_attack(attacker, defender)
             if not defender.is_alive():
-                time.sleep(1)
-                print(f"{defender.name} was slain!")
+                # time.sleep(1)
+                # print(f"{defender.name} was slain!")
                 return "defender_dead"
 
         elif action == "item":
@@ -259,8 +260,10 @@ class Battle:
                 else:
                     # Check for death from status here
                     self.update_statuses(hero)
-                    if not hero.is_alive:
+                    if not hero.is_alive():
                         return "hero_dead"
+                    time.sleep(1)
+                    print(f"{second_player.name} was slain!")
                     return "enemy_dead"
 
         if second_player == hero:
@@ -278,24 +281,29 @@ class Battle:
                 else:
                     # Check for death from status here
                     self.update_statuses(hero)
-                    if not hero.is_alive:
+                    if not hero.is_alive():
                         return "hero_dead"
+                    time.sleep(1)
+                    print(f"{first_player.name} was slain!")
                     return "enemy_dead"
 
         # Update statuses and check for death
         self.update_statuses(first_player)
-        if not first_player.is_alive:
+        if not first_player.is_alive():
             if first_player == hero:
                 return "hero_dead"
             else:
+                time.sleep(1)
+                print(f"{first_player.name} was slain!")
                 return "enemy_dead"
         self.update_statuses(second_player)
-        if not second_player.is_alive:
+        if not second_player.is_alive():
             if second_player == hero:
                 return "hero_dead"
             else:
+                time.sleep(1)
+                print(f"{second_player.name} was slain!")
                 return "enemy_dead"
-
         return "continue"
 
     def run(self):
@@ -316,6 +324,12 @@ class Dungeon:
         self.hero = hero
         self.enemies = enemies
 
+    def drop_items(self, enemy):
+        for item in enemy.drops:
+            if random.random() < item["Chance"]:
+                print(f"{self.hero.name} receivces {item["Name"]}!")
+                self.hero.inventory.items.append(item_dict[item["Name"]])
+
     def run(self):
         dungeon_level = 0
         while True:
@@ -325,7 +339,9 @@ class Dungeon:
             enemy_name = random.choice(list(self.enemies.keys()))
             battle = Battle(self.hero, copy.deepcopy(enemy_dict[enemy_name]))
             results = battle.run()
-            if results == "hero_dead" or results == "run":
+            if results == "enemy_dead":
+                self.drop_items(enemy_dict[enemy_name])
+            elif results == "run" or "hero_dead":
                 break
             dungeon_level += 1
         time.sleep(1)

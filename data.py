@@ -1,4 +1,4 @@
-from entities import Player, Weapon, Inventory, Item, StatusEffect, Poison
+from entities import Player, Weapon, Inventory, Item, StatusEffect, Poison, Bleed
 
 # Dictionary of items
 item_dict = {
@@ -35,12 +35,25 @@ item_dict = {
 # Dictionary of weapons
 weapon_dict = {
     "Poison dagger": Weapon(
-        "Poison dagger",
-        5,
-        "pierce",
+        "Poison dagger",  # Name
+        5,  # Damage
+        "pierce",  # Damage type
+        [  # List of posssible status effects
+            {
+                "status_class": Poison,  # Name of status effect
+                "duration": 5,  # Duration of status effect
+                "chance": 1,  # Chance of inflicting status effect
+            },
+        ],
+    ),
+    # Test bleed weapon
+    "Jagged dagger": Weapon(
+        "Jagged dagger",
+        0,
+        "slash",
         [
             {
-                "status_class": Poison,
+                "status_class": Bleed,
                 "duration": 5,
                 "chance": 1,
             },
@@ -103,12 +116,13 @@ hero_dict = {
         100,
         75,
         Inventory(
-            [weapon_dict["Poison dagger"]],
+            [weapon_dict["Sword of Destiny"]],
             [
                 item_dict["Minor health potion"],
                 item_dict["Vial of squonk tears"],
             ],
         ),
+        [],
         [],
         [],
     )
@@ -118,20 +132,42 @@ hero_dict = {
 # Dictionary of enemies
 enemy_dict = {
     "Goblin": Player(
-        "Goblin", 30, 75, Inventory([weapon_dict["Wooden club"]], []), [], []
+        "Goblin",  # Name
+        30,  # Health
+        75,  # Speed
+        Inventory(
+            [weapon_dict["Wooden club"]],  # Weapon list
+            [],  # Item list
+        ),
+        [],  # Weaknesses
+        [],  # Resistances
+        [  # Item drops with their chances
+            {
+                "Name": "Minor health potion",
+                "Chance": 1,
+            }
+        ],
     ),
-    "Orc": Player("Orc", 40, 60, Inventory([weapon_dict["Rusty sword"]], []), [], []),
+    "Orc": Player(
+        "Orc", 40, 60, Inventory([weapon_dict["Rusty sword"]], []), [], [], []
+    ),
     "Skeleton": Player(
-        "Skeleton", 35, 25, Inventory([weapon_dict["Rusty sword"]], []), [], []
+        "Skeleton", 35, 25, Inventory([weapon_dict["Rusty sword"]], []), [], [], []
     ),
     "Dragon": Player(
-        "Dragon", 200, 25, Inventory([weapon_dict["Fire breath"]], []), [], []
+        "Dragon", 200, 25, Inventory([weapon_dict["Fire breath"]], []), [], [], []
     ),
     "Gnome archer": Player(
-        "Gnome archer", 20, 80, Inventory([weapon_dict["Small bow"]], []), [], []
+        "Gnome archer", 20, 80, Inventory([weapon_dict["Small bow"]], []), [], [], []
     ),
     "Flying piglett": Player(
-        "Flying piglett", 1, 100, Inventory([weapon_dict["Cute snuffle"]], []), [], []
+        "Flying piglett",
+        1,
+        100,
+        Inventory([weapon_dict["Cute snuffle"]], []),
+        [],
+        [],
+        [],
     ),
     "Four-dimensional octopus": Player(
         "Four-dimensional octopus",
@@ -140,8 +176,20 @@ enemy_dict = {
         Inventory([weapon_dict["Interdimensional tentacle"]], []),
         [],
         [],
+        [],
     ),
     "Squonk": Player(
-        "Squonk", 25, 30, Inventory([weapon_dict["Cry of shame"]], []), [], []
+        "Squonk",
+        25,
+        30,
+        Inventory([weapon_dict["Cry of shame"]], []),
+        [],
+        [],
+        [
+            {
+                "Name": "Vial of squonk tears",
+                "Chance": 1,
+            }
+        ],
     ),
 }

@@ -26,7 +26,6 @@ class StatusEffect:
 class Poison(StatusEffect):
     def __init__(self, duration):
         super().__init__("Poison", duration)
-        # Poison should not be stackable (something like bleed will be)
         self.is_stackable = False
 
     def on_turn_end(self, target):
@@ -37,6 +36,23 @@ class Poison(StatusEffect):
         self.duration -= 1
         time.sleep(1)
         print(f"{target.name} takes {old_hp - target.current_hp} damage from poison!")
+
+
+class Bleed(StatusEffect):
+    def __init__(self, duration):
+        super().__init__("Bleed", duration)
+        self.is_stackable = True
+        self.stack = 1
+        self.max_stacks = 3
+
+    def on_turn_end(self, target):
+        old_hp = target.current_hp
+        target.current_hp -= 3 * self.stack
+        if target.current_hp < 0:
+            target.current_hp = 0
+        self.duration -= 1
+        time.sleep(1)
+        print(f"{target.name} takes {old_hp - target.current_hp} damage from bleed!")
 
 
 class Resistance(StatusEffect):
@@ -57,12 +73,11 @@ class Weapon:
         self.name = name
         self.damage = damage
         self.damage_type = damage_type
-        # Status effects should be a list of dictionaries? With the status, duration and the chance of inflicting said status?
         self.status_effects = status_effects
 
 
 class Player:
-    def __init__(self, name, hp, speed, inventory, weaknesses, resistances):
+    def __init__(self, name, hp, speed, inventory, weaknesses, resistances, drops):
         self.name = name
         self.max_hp = hp
         self.current_hp = hp
@@ -73,6 +88,7 @@ class Player:
         self.resistances = resistances
         self.temporary_resistances = {}
         self.status_effects = []
+        self.drops = drops
 
     def is_alive(self):
         return self.current_hp > 0
